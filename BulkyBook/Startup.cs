@@ -14,6 +14,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using BulkyBook.DataAccess.Repository.IRepository;
 using BulkyBook.DataAccess.Repository;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using BulkyBook.Utility;
 
 namespace BulkyBook
 {
@@ -32,12 +34,32 @@ namespace BulkyBook
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(
                     Configuration.GetConnectionString("DefaultConnection")));
-            services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
-                .AddEntityFrameworkStores<ApplicationDbContext>();
+            //services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+            //    .AddEntityFrameworkStores<ApplicationDbContext>();
+            services.AddIdentity<IdentityUser, IdentityRole>().AddDefaultTokenProviders()
+                .AddEntityFrameworkStores<ApplicationDbContext>(); //AddDefaultIdentity Doesnot support Role Manager for User Registration
+            services.AddSingleton<IEmailSender, EmailSender>();
             services.AddScoped<IUnitOfWork, UnitOfWork>(); // As a part of Dependency Injection
             services.AddControllersWithViews().AddRazorRuntimeCompilation();
             //services.AddControllersWithViews();
             services.AddRazorPages();
+            services.ConfigureApplicationCookie(options =>
+            {
+                options.LoginPath = $"/Identity/Account/Login";
+                options.LogoutPath = $"/Identity/Account/Logout";
+                options.AccessDeniedPath = $"/Identity/Account/AccessDenied";
+            });
+            services.AddAuthentication().AddFacebook(options =>
+            {
+                options.AppId = "822339061592376";
+                options.AppSecret = "ccfe5fa5c84575a0ff1882bc49cffdaf";
+            });
+            services.AddAuthentication().AddGoogle(options =>
+            {
+                options.ClientId = "243357543184-ugmh42e6r26bp2e3jdiku0go5cjma438.apps.googleusercontent.com";
+                options.ClientSecret = "WhFOPjJEEI4KGcJqXXbbBqbq";
+
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
